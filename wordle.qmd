@@ -1,0 +1,103 @@
+---
+title: "wordle.qmd"
+format: html
+---
+
+```{r}
+library(tidyverse) #Loading in useful packages
+load_dictionary <- function(filename){read_lines(filename)} # Custom function that reads the file ("file name") and converts its contents into a list of raw vectors
+valid_list <- load_dictionary("collins-scrabble-words-2019.txt") # Loading in file that is used as the list of all acceptable guesses for the wordle game
+solution_list <- load_dictionary("google-10000-english-usa-no-swears.txt") # Loading in file of all suitable correct solutions to the wordle game
+str(valid_list) # checking the structure of the guess list and solution list to ensure they are properly structured
+str(solution_list)
+```
+
+
+```{r}
+solution_list <- base::intersect(solution_list, valid_list) # Matching the solution list and valid list. This is sub setting the solution list to only have words that are also included in the valid list.
+# After running the intersection function, the solution_list has 8337 compared to the original 9885
+```
+
+```{r}
+pick_solution <- function(possible_list){
+  possible_list <- solution_list[nchar(solution_list) == 5]  
+  
+  solution <- sample(possible_list, size = 1)
+    strsplit(solution, "")[[1]]
+    
+} # Custom function that subsets all 5-letter words from the solution list (creating the possible list) and from that subset it picks 1 random word from the possible list (the solution). It also splits the solution into individual characters
+solution <- pick_solution(possible_list) # Sub-setting solution to run the pick_solution function every time "solution" is called.
+solution <- as.character(unlist(solution)) # converts the solution from a class of "list" to a class of "character" to match it with the class of the valid list. 
+
+```
+  
+```{r}
+guess_eval <- function(valid_list, solution) { # Custom function that evaluates the guess (taken from the valid list) and the solution (picked from the pick_solution function) 
+  wordlength <- length(solution) # setting the word length used for wordle as the length of the solution
+  
+  resolve <- rep("-", wordlength)
+# First pass is to check for any letters that match position between the guess and the solution. If the letter is correct and in the correct position then it is labeled with "*" in the resolve (the portion of the game that shows you if letters are correct or not). If ther letter is not in the word then it is labled with "-"
+  for (i in 1:wordlength) {
+    if (valid_list[i] == solution[i]) {
+      resolve[i] <- "*"
+      solution[i] <- "-" 
+    }
+  }
+  # Second pass to determine that if there are any correct letters but in the wrong position between the guess and the solution. If this is true it will label it with "+" but if it is false then it is labeled with "-"
+  for (i in 1:wordlength) {
+    if (resolve[i] != "*") {
+      index <- match(valid_list[i], solution)
+      if (!is.na(index)) {
+        resolve[i] <- "+"
+        solution[index] <- "-"
+      }
+    }
+  }
+  resolve
+}  
+```
+  
+```{r}
+play_wordle <- function(solution, valid_list, num_guesses=6){
+  solution <- pick_solution(possible_list) # Picks a new solution every time the play_wordle function is called.
+  #Starting message to the game, including the rules.
+  print(paste("Welcome to Kameron's Wordle. You have", num_guesses, "chances to guess a 5 letter word. Good Luck!"))
+  
+  # This bit of code is used to display to the player at the start of the game how many letters they have left (all 26 for 0 guesses). It will continue to print out the letters left as long as the guess count is less than the number of guesses allow (6).
+  guess_count <- 0
+  letters_left <- LETTERS
+  while (guess_count < num_guesses) {
+    print(paste(c("Letters left:", letters_left), collapse = " "))
+  
+  # This chunk of code is used to increase the guess count every time a new guess in inputted. After each round the guess count will increase by 1. It also has a check to ensure that the guesses have 5 characters.
+   guess_count <- guess_count + 1
+   guess <- readline(paste0("Enter guess ", guess_count, ":"))
+   while(nchar(guess) !=5) {
+      guess <- readline(paste0("Guess must have 5 characters:"))
+    }
+   guess <- toupper(guess) # Converts all guesses to upper case
+   valid_list <- strsplit(guess, "")[[1]]
+   
+   resolve <- guess_eval(valid_list, solution) # Uses the custom guess_eval function to check the letters between the guess (within the valid list) and the solution randomly pulled at the start of the game. 
+   
+   letters_left <- setdiff(letters_left, valid_list) # Removes any used letters from the letters left message for the next round of play
+   
+   # If the player has successfully guessed the wordle then this chunk of code is used to congratulate the player and return the number of guesses it took to win. 
+   print(paste(strsplit(guess,"")[[1]], collapse = " "))
+   print(paste(resolve, collapse = " "))
+   if (all(resolve == "*")) {
+     print("Congratulations you have won Kameron's wordle!")
+     return(guess_count)
+   }
+ }
+  print(paste(c("Womp Womp, you lose! The answer was:", solution), collapse = " "))
+  return(guess_count) # If the player does not guess the word in 6 tries they lose and get this message.
+}
+```
+
+
+```{r}
+# Play Wordle
+play_wordle(solution)
+```
+
