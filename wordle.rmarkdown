@@ -61,7 +61,7 @@ guess_eval <- function(valid_list, solution) { # Custom function that evaluates 
 play_wordle <- function(solution, valid_list, num_guesses=6){
   solution <- pick_solution(possible_list) # Picks a new solution every time the play_wordle function is called.
   #Starting message to the game, including the rules.
-  print(paste("Welcome to Kameron's Wordle. You have", num_guesses, "chances to guess a 5 letter word. * = green + = yellow, - means grey. Good Luck!"))
+  print(paste("Welcome to Kameron's Wordle. You have", num_guesses, "chances to guess a 5 letter word. Good Luck!"))
   
   # This bit of code is used to display to the player at the start of the game how many letters they have left (all 26 for 0 guesses). It will continue to print out the letters left as long as the guess count is less than the number of guesses allow (6).
   guess_count <- 0
@@ -100,4 +100,5 @@ play_wordle <- function(solution, valid_list, num_guesses=6){
 # Play Wordle
 play_wordle(solution)
 ```
+
 
